@@ -1,72 +1,78 @@
 import math
 import string
+import matplotlib.pyplot as plt
 
 def password_strength(password):
-    feedback = []
+    criteria = {
+        "Length": 0,
+        "Upper/Lower Mix": 0,
+        "Numbers": 0,
+        "Special Characters": 0,
+        "Entropy": 0
+    }
     strength_score = 0
 
     length = len(password)
-    if length < 8:
-        feedback.append("Too short: Use at least 8 characters.")
-    elif 8 <= length < 12:
-        feedback.append("Good length: Consider using more than 12 characters for better security.")
-        strength_score += 1
-    else:
-        feedback.append("Great length: Your password is sufficiently long.")
-        strength_score += 2
+    if length >= 8:
+        if 8 <= length < 12:
+            criteria["Length"] = 1
+        else:
+            criteria["Length"] = 2
+        strength_score += criteria["Length"]
 
-    # Criteria: Uppercase and Lowercase Letters
     has_upper = any(char.isupper() for char in password)
     has_lower = any(char.islower() for char in password)
     if has_upper and has_lower:
-        feedback.append("Good mix of uppercase and lowercase letters.")
+        criteria["Upper/Lower Mix"] = 2
         strength_score += 2
-    else:
-        feedback.append("Add a mix of uppercase and lowercase letters for better security.")
 
     has_numbers = any(char.isdigit() for char in password)
     if has_numbers:
-        feedback.append("Great! Your password includes numbers.")
+        criteria["Numbers"] = 1
         strength_score += 1
-    else:
-        feedback.append("Include numbers to make your password stronger.")
 
     special_chars = set(string.punctuation)
     has_special = any(char in special_chars for char in password)
     if has_special:
-        feedback.append("Nice! Your password includes special characters.")
+        criteria["Special Characters"] = 2
         strength_score += 2
-    else:
-        feedback.append("Add special characters (e.g., !, @, #) for better security.")
 
     unique_chars = len(set(password))
-    entropy = math.log2(unique_chars ** length)
-    if entropy < 50:
-        feedback.append("Low entropy: Your password might be easy to guess. Avoid repeating patterns.")
-    elif 50 <= entropy < 70:
-        feedback.append("Moderate entropy: Good, but there’s room for improvement.")
-        strength_score += 1
-    else:
-        feedback.append("High entropy: Your password is very strong.")
-        strength_score += 2
+    entropy = math.log2(unique_chars ** length) if length > 0 else 0
+    if entropy >= 50:
+        if 50 <= entropy < 70:
+            criteria["Entropy"] = 1
+        else:
+            criteria["Entropy"] = 2
+        strength_score += criteria["Entropy"]
 
-    if strength_score <= 4:
-        feedback.append("Overall Strength: Weak. Consider revising your password based on the suggestions.")
-    elif 5 <= strength_score <= 7:
-        feedback.append("Overall Strength: Moderate. A few tweaks could make it stronger.")
-    else:
-        feedback.append("Overall Strength: Strong. Great job!")
+    max_score = sum(criteria.values())
+    strength_percentage = (strength_score / max_score) * 100 if max_score > 0 else 0
 
-    return feedback
+    return criteria, strength_percentage
+
+def visualize_strength(criteria, strength_percentage):
+    labels = list(criteria.keys())
+    scores = list(criteria.values())
+
+    plt.figure(figsize=(8, 5))
+    plt.bar(labels, scores, color=['blue', 'green', 'orange', 'purple', 'red'])
+    plt.title(f"Password Strength: {strength_percentage:.2f}%")
+    plt.xlabel("Criteria")
+    plt.ylabel("Score")
+    plt.ylim(0, 2) 
+    plt.axhline(y=1, color='gray', linestyle='--', linewidth=0.7, label='Moderate Threshold')
+    plt.axhline(y=2, color='black', linestyle='--', linewidth=0.7, label='Maximum Threshold')
+    plt.legend(loc='upper right')
+    plt.show()
 
 def main():
     print("Password Strength Assessment Tool\n")
     password = input("Enter your password: ")
-    feedback = password_strength(password)
+    criteria, strength_percentage = password_strength(password)
 
-    print("\nFeedback:")
-    for item in feedback:
-        print(f"- {item}")
+    print(f"\nYour Password Strength: {strength_percentage:.2f}%")
+    visualize_strength(criteria, strength_percentage)
 
 if __name__ == "__main__":
     main()
